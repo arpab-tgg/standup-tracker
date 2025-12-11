@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Standup Rotation Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+
+        .card h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .current-leader {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .current-leader h2 {
+            color: white;
+            font-size: 1.2em;
+            margin-bottom: 15px;
+            opacity: 0.9;
+        }
+
+        .current-leader .leader-name {
+            font-size: 3em;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .current-leader .date {
+            font-size: 1.1em;
+            opacity: 0.9;
+            margin-bottom: 20px;
+        }
+
+        .action-button {
+            background: white;
+            color: #667eea;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 5px;
+        }
+
+        .action-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .action-button.secondary {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 2px solid white;
+        }
+
+        .add-member-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .add-member-form input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .add-member-form input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .add-member-form button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .add-member-form button:hover {
+            background: #5568d3;
+        }
+
+        .team-list {
+            list-style: none;
+        }
+
+        .team-member {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            transition: all 0.3s;
+        }
+
+        .team-member:hover {
+            background: #f0f0f0;
+        }
+
+        .team-member.unavailable {
+            opacity: 0.5;
+            background: #ffe0e0;
+        }
+
+        .team-member.current {
+            background: #e8f4ff;
+            border: 2px solid #667eea;
+        }
+
+        .member-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .member-number {
+            background: #667eea;
+            color: white;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .member-name {
+            font-size: 1.1em;
+            font-weight: 500;
+        }
+
+        .member-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .icon-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.3em;
+            padding: 5px 10px;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+
+        .icon-btn:hover {
+            background: rgba(0,0,0,0.1);
+        }
+
+        .schedule-list {
+            list-style: none;
+        }
+
+        .schedule-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .schedule-item:last-child {
+            border-bottom: none;
+        }
+
+        .schedule-date {
+            font-weight: 600;
+            color: #555;
+        }
+
+        .schedule-leader {
+            color: #667eea;
+            font-weight: 500;
+        }
+
+        .history-list {
+            list-style: none;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 0.9em;
+        }
+
+        .history-date {
+            color: #888;
+        }
+
+        .history-leader {
+            color: #333;
+            font-weight: 500;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #aaa;
+            padding: 40px;
+        }
+
+        .empty-state-icon {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.75em;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .badge.unavailable {
+            background: #ffe0e0;
+            color: #c00;
+        }
+
+        .badge.available {
+            background: #e0ffe0;
+            color: #0a0;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #888;
+            font-size: 0.9em;
+        }
+
+        @media (max-width: 768px) {
+            .stats {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🎯 Standup Rotation Tracker</h1>
+            <p>Standup schedule: Mon, Tue, Thu, Fri (No Wednesdays!)</p>
+        </div>
+
+        <!-- Current Leader Card -->
+        <div class="current-leader">
+            <h2>Today's Standup Leader</h2>
+            <div class="leader-name" id="currentLeader">Add team members to start</div>
+            <div class="date" id="currentDate"></div>
+            <div>
+                <button class="action-button" id="completedBtn" onclick="markCompleted()">✅ Mark as Completed</button>
+                <button class="action-button secondary" id="skipBtn" onclick="skipToNext()">⏭️ Skip to Next</button>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="totalMembers">0</div>
+                <div class="stat-label">Team Members</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="availableMembers">0</div>
+                <div class="stat-label">Available Today</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalStandups">0</div>
+                <div class="stat-label">Standups Done</div>
+            </div>
+        </div>
+
+        <!-- Team Management Card -->
+        <div class="card">
+            <h2>👥 Team Members</h2>
+            <div class="add-member-form">
+                <input type="text" id="memberInput" placeholder="Enter team member name" onkeypress="handleKeyPress(event)">
+                <button onclick="addMember()">➕ Add Member</button>
+                <button onclick="resetToDefaults()" style="background: #ff6b6b;">🔄 Reset Team</button>
+            </div>
+            <ul class="team-list" id="teamList"></ul>
+        </div>
+
+        <!-- Upcoming Schedule Card -->
+        <div class="card">
+            <h2>📅 Upcoming Schedule</h2>
+            <ul class="schedule-list" id="scheduleList"></ul>
+        </div>
+
+        <!-- History Card -->
+        <div class="card">
+            <h2>📝 History</h2>
+            <ul class="history-list" id="historyList"></ul>
+        </div>
+    </div>
+
+    <script>
+        // Data structure with default team members
+        let teamMembers = ['Arpa', 'Ben', 'Clara', 'Jason', 'Luke', 'Mai', 'Phil', 'Raj'];
+        let currentIndex = 0;
+        let lastStandupDate = null;
+        let history = [];
+        let unavailableMembers = [];
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadData();
+            updateUI();
+            updateDate();
+        });
+
+        // Load data from localStorage
+        function loadData() {
+            try {
+                const saved = localStorage.getItem('standupRotation');
+                if (saved) {
+                    const data = JSON.parse(saved);
+                    // Check if saved team is different from defaults - if so, use saved data
+                    // Otherwise force refresh with defaults
+                    const defaultTeam = ['Arpa', 'Ben', 'Clara', 'Jason', 'Luke', 'Mai', 'Phil', 'Raj'];
+                    const savedTeamString = JSON.stringify(data.teamMembers || []);
+                    const defaultTeamString = JSON.stringify(defaultTeam);
+                    
+                    // If saved data has all 8 members OR is intentionally modified, use it
+                    if (data.teamMembers && data.teamMembers.length >= 8) {
+                        teamMembers = data.teamMembers;
+                    } else if (savedTeamString !== defaultTeamString && data.teamMembers && data.teamMembers.length > 0) {
+                        // User has modified the list, respect their changes
+                        teamMembers = data.teamMembers;
+                    }
+                    // Otherwise keep the defaults
+                    
+                    currentIndex = data.currentIndex || 0;
+                    lastStandupDate = data.lastStandupDate || null;
+                    history = data.history || [];
+                    unavailableMembers = data.unavailableMembers || [];
+                }
+                
+                // Save the current state to ensure defaults are persisted
+                saveData();
+            } catch (e) {
+                console.log('localStorage not available, using defaults');
+            }
+        }
+
+        // Save data to localStorage
+        function saveData() {
+            try {
+                const data = {
+                    teamMembers,
+                    currentIndex,
+                    lastStandupDate,
+                    history,
+                    unavailableMembers
+                };
+                localStorage.setItem('standupRotation', JSON.stringify(data));
+            } catch (e) {
+                console.log('Could not save to localStorage');
+            }
+        }
+
+        // Update date display
+        function updateDate() {
+            const today = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('currentDate').textContent = today.toLocaleDateString('en-US', options);
+        }
+
+        // Add member
+        function addMember() {
+            const input = document.getElementById('memberInput');
+            const name = input.value.trim();
+            
+            if (name && !teamMembers.includes(name)) {
+                teamMembers.push(name);
+                input.value = '';
+                saveData();
+                updateUI();
+            }
+        }
+
+        // Reset to default team
+        function resetToDefaults() {
+            if (confirm('Reset to the default 8-member team? This will keep your history but reset the member list.')) {
+                teamMembers = ['Arpa', 'Ben', 'Clara', 'Jason', 'Luke', 'Mai', 'Phil', 'Raj'];
+                currentIndex = 0;
+                unavailableMembers = [];
+                // Keep history and lastStandupDate
+                saveData();
+                updateUI();
+            }
+        }
+
+        // Handle enter key in input
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                addMember();
+            }
+        }
+
+        // Remove member
+        function removeMember(index) {
+            if (confirm(`Remove ${teamMembers[index]} from the rotation?`)) {
+                teamMembers.splice(index, 1);
+                if (currentIndex >= teamMembers.length) {
+                    currentIndex = 0;
+                }
+                saveData();
+                updateUI();
+            }
+        }
+
+        // Toggle unavailable status
+        function toggleUnavailable(name) {
+            const index = unavailableMembers.indexOf(name);
+            if (index > -1) {
+                unavailableMembers.splice(index, 1);
+            } else {
+                unavailableMembers.push(name);
+            }
+            saveData();
+            updateUI();
+        }
+
+        // Get next available member
+        function getNextAvailableMember() {
+            if (teamMembers.length === 0) return null;
+            
+            let attempts = 0;
+            let index = currentIndex;
+            
+            while (attempts < teamMembers.length) {
+                const member = teamMembers[index];
+                if (!unavailableMembers.includes(member)) {
+                    return { member, index };
+                }
+                index = (index + 1) % teamMembers.length;
+                attempts++;
+            }
+            
+            return null;
+        }
+
+        // Mark standup as completed
+        function markCompleted() {
+            if (teamMembers.length === 0) return;
+            
+            const next = getNextAvailableMember();
+            if (!next) {
+                alert('All team members are marked as unavailable!');
+                return;
+            }
+            
+            const today = new Date().toISOString().split('T')[0];
+            
+            // Add to history
+            history.unshift({
+                date: today,
+                leader: next.member,
+                timestamp: new Date().toISOString()
+            });
+            
+            // Keep only last 30 entries
+            if (history.length > 30) {
+                history = history.slice(0, 30);
+            }
+            
+            // Move to next person
+            currentIndex = (next.index + 1) % teamMembers.length;
+            lastStandupDate = today;
+            
+            saveData();
+            updateUI();
+        }
+
+        // Skip to next person
+        function skipToNext() {
+            if (teamMembers.length === 0) return;
+            
+            currentIndex = (currentIndex + 1) % teamMembers.length;
+            saveData();
+            updateUI();
+        }
+
+        // Generate upcoming schedule
+        function generateSchedule() {
+            if (teamMembers.length === 0) return [];
+            
+            const schedule = [];
+            const today = new Date();
+            let tempIndex = currentIndex;
+            
+            for (let i = 0; i < 10; i++) {
+                const date = new Date(today);
+                date.setDate(today.getDate() + i);
+                
+                // Skip weekends and Wednesdays (day 3)
+                if (date.getDay() !== 0 && date.getDay() !== 6 && date.getDay() !== 3) {
+                    let attempts = 0;
+                    while (attempts < teamMembers.length) {
+                        const member = teamMembers[tempIndex];
+                        if (!unavailableMembers.includes(member)) {
+                            schedule.push({
+                                date: date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
+                                leader: member
+                            });
+                            tempIndex = (tempIndex + 1) % teamMembers.length;
+                            break;
+                        }
+                        tempIndex = (tempIndex + 1) % teamMembers.length;
+                        attempts++;
+                    }
+                }
+            }
+            
+            return schedule;
+        }
+
+        // Update UI
+        function updateUI() {
+            // Update current leader
+            const next = getNextAvailableMember();
+            const leaderEl = document.getElementById('currentLeader');
+            
+            if (next) {
+                leaderEl.textContent = next.member;
+            } else if (teamMembers.length === 0) {
+                leaderEl.textContent = 'Add team members to start';
+            } else {
+                leaderEl.textContent = 'All members unavailable';
+            }
+            
+            // Update stats
+            document.getElementById('totalMembers').textContent = teamMembers.length;
+            document.getElementById('availableMembers').textContent = teamMembers.length - unavailableMembers.length;
+            document.getElementById('totalStandups').textContent = history.length;
+            
+            // Update team list
+            const teamListEl = document.getElementById('teamList');
+            teamListEl.innerHTML = '';
+            
+            if (teamMembers.length === 0) {
+                teamListEl.innerHTML = '<div class="empty-state"><div class="empty-state-icon">👥</div><p>No team members yet. Add your first member above!</p></div>';
+            } else {
+                teamMembers.forEach((member, index) => {
+                    const isUnavailable = unavailableMembers.includes(member);
+                    const isCurrent = index === currentIndex;
+                    
+                    const li = document.createElement('li');
+                    li.className = `team-member ${isUnavailable ? 'unavailable' : ''} ${isCurrent ? 'current' : ''}`;
+                    li.innerHTML = `
+                        <div class="member-info">
+                            <div class="member-number">${index + 1}</div>
+                            <div class="member-name">
+                                ${member}
+                                ${isCurrent ? '<span class="badge available">Next Up</span>' : ''}
+                                ${isUnavailable ? '<span class="badge unavailable">Unavailable</span>' : ''}
+                            </div>
+                        </div>
+                        <div class="member-actions">
+                            <button class="icon-btn" onclick="toggleUnavailable('${member}')" title="${isUnavailable ? 'Mark as available' : 'Mark as unavailable'}">
+                                ${isUnavailable ? '✅' : '🚫'}
+                            </button>
+                            <button class="icon-btn" onclick="removeMember(${index})" title="Remove member">🗑️</button>
+                        </div>
+                    `;
+                    teamListEl.appendChild(li);
+                });
+            }
+            
+            // Update schedule
+            const scheduleEl = document.getElementById('scheduleList');
+            const schedule = generateSchedule();
+            
+            if (schedule.length === 0) {
+                scheduleEl.innerHTML = '<div class="empty-state"><p>Add team members to see the schedule</p></div>';
+            } else {
+                scheduleEl.innerHTML = '';
+                schedule.forEach(item => {
+                    const li = document.createElement('li');
+                    li.className = 'schedule-item';
+                    li.innerHTML = `
+                        <span class="schedule-date">${item.date}</span>
+                        <span class="schedule-leader">${item.leader}</span>
+                    `;
+                    scheduleEl.appendChild(li);
+                });
+            }
+            
+            // Update history
+            const historyEl = document.getElementById('historyList');
+            
+            if (history.length === 0) {
+                historyEl.innerHTML = '<div class="empty-state"><p>No standup history yet</p></div>';
+            } else {
+                historyEl.innerHTML = '';
+                history.forEach(item => {
+                    const li = document.createElement('li');
+                    li.className = 'history-item';
+                    const date = new Date(item.date);
+                    li.innerHTML = `
+                        <span class="history-date">${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                        <span class="history-leader">${item.leader}</span>
+                    `;
+                    historyEl.appendChild(li);
+                });
+            }
+        }
+    </script>
+</body>
+</html>
